@@ -1,4 +1,4 @@
-/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable prettier/prettier */
 import React, {useState} from 'react';
 import {
   View,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import {RNCamera} from 'react-native-camera';
 import CameraRoll from '@react-native-community/cameraroll';
+import ImagePicker from 'react-native-image-picker';
 
 export default function App() {
   const [type, setType] = useState(RNCamera.Constants.Type.back);
@@ -25,16 +26,10 @@ export default function App() {
 
     setCapturedPhoto(data.uri);
     setOpen(true);
+    console.log('FOTO TIRADA CAMERA: ' + data.uri);
 
+    //Chama funcao salvar a foto no album
     savePicture(data.uri);
-  }
-
-  function toggleCam() {
-    setType(
-      type === RNCamera.Constants.Type.back
-        ? RNCamera.Constants.Type.front
-        : RNCamera.Constants.Type.back,
-    );
   }
 
   async function hasAndroidPermission() {
@@ -56,11 +51,39 @@ export default function App() {
 
     CameraRoll.save(data, 'album')
       .then(res => {
-        console.log('Salvo com sucesso' + res);
+        console.log('SALVO COM SUCESSO: ' + res);
       })
       .catch(err => {
-        console.log('Erro as salvar' + err);
+        console.log('ERROR AO SALVAR: ' + err);
       });
+  }
+
+  function toggleCam() {
+    setType(
+      type === RNCamera.Constants.Type.back
+        ? RNCamera.Constants.Type.front
+        : RNCamera.Constants.Type.back,
+    );
+  }
+
+  function openAlbum() {
+    const options = {
+      title: 'Selecione uma foto',
+      chooseFromLibraryButtonTitle: 'Buscar foto do album..',
+      noData: true,
+      mediaType: 'photo',
+    };
+
+    ImagePicker.launchImageLibrary(options, response => {
+      if (response.didCancel) {
+        console.log('Image Picker cancelado...');
+      } else if (response.error) {
+        console.log('Gerou algum erro: ' + response.error);
+      } else {
+        setCapturedPhoto(response.uri);
+        setOpen(true);
+      }
+    });
   }
 
   return (
@@ -72,16 +95,13 @@ export default function App() {
         type={type}
         flashMode={RNCamera.Constants.FlashMode.auto}
         androidCameraPermissionOptions={{
-          title: 'Permissão para usar a câmera',
-          message: 'Nós precisamos usar a sua câmera',
+          title: 'Permissao para usar a camera',
+          message: 'Nós precisamos usar a sua camera',
           buttonPositive: 'Ok',
           buttonNegative: 'Cancelar',
         }}>
         {({camera, status, recordAndroidPermissionStatus}) => {
-          if (status !== 'READY') {
-            return <View />;
-          }
-
+          if (status !== 'READY') {return <View />;}
           return (
             <View
               style={{
@@ -93,11 +113,11 @@ export default function App() {
               <TouchableOpacity
                 onPress={() => takePicture(camera)}
                 style={styles.capture}>
-                <Text>Tirar Foto</Text>
+                <Text>Tirar foto</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => {}} style={styles.capture}>
-                <Text>Álbum de Foto</Text>
+              <TouchableOpacity onPress={openAlbum} style={styles.capture}>
+                <Text>Album</Text>
               </TouchableOpacity>
             </View>
           );
@@ -124,6 +144,7 @@ export default function App() {
               onPress={() => setOpen(false)}>
               <Text style={{fontSize: 24}}>Fechar</Text>
             </TouchableOpacity>
+
             <Image
               resizeMode="contain"
               style={{width: 350, height: 450, borderRadius: 15}}
@@ -143,22 +164,20 @@ const styles = StyleSheet.create({
   },
   preview: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   capture: {
     flex: 0,
-    marginTop: '130%',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     borderRadius: 5,
     padding: 15,
     paddingHorizontal: 20,
-    paddingVertical: 20,
     alignSelf: 'center',
     margin: 20,
   },
   camPosition: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     borderRadius: 5,
     padding: 10,
     height: 40,
