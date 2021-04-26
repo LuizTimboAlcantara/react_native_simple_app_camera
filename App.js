@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   Modal,
   Image,
+  PermissionsAndroid,
+  Platform,
 } from 'react-native';
 import {RNCamera} from 'react-native-camera';
+import CameraRoll from '@react-native-community/cameraroll';
 
 export default function App() {
   const [type, setType] = useState(RNCamera.Constants.Type.back);
@@ -22,7 +25,8 @@ export default function App() {
 
     setCapturedPhoto(data.uri);
     setOpen(true);
-    console.log(data.uri);
+
+    savePicture(data.uri);
   }
 
   function toggleCam() {
@@ -31,6 +35,32 @@ export default function App() {
         ? RNCamera.Constants.Type.front
         : RNCamera.Constants.Type.back,
     );
+  }
+
+  async function hasAndroidPermission() {
+    const permission = PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
+
+    const hasPermission = await PermissionsAndroid.check(permission);
+    if (hasPermission) {
+      return true;
+    }
+
+    const status = await PermissionsAndroid.request(permission);
+    return status === 'granted';
+  }
+
+  async function savePicture(data) {
+    if (Platform.OS === 'android' && !(await hasAndroidPermission())) {
+      return;
+    }
+
+    CameraRoll.save(data, 'album')
+      .then(res => {
+        console.log('Salvo com sucesso' + res);
+      })
+      .catch(err => {
+        console.log('Erro as salvar' + err);
+      });
   }
 
   return (
